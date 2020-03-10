@@ -66,6 +66,18 @@ class Controller:
             self.avb_packs.pop(self.avb_packs.index(packId))
         return wrong_address_list
 
+    def get_early_dev(self, avb_packs):
+        early_dev_list = []
+        for packId in avb_packs:
+            package = self.hub_packages[packId]
+            if package.deadline.startswith("10:30"):
+                early_dev_list.append(packId)
+
+        for packId in early_dev_list:
+            self.avb_packs.pop(self.avb_packs.index(packId))
+        
+        return early_dev_list
+
     def create_second_list(self, packagesIds):
         sec_list = set()
         for packId in packagesIds:
@@ -77,42 +89,50 @@ class Controller:
                 package_ids = self.process_notes(package.note)
                 for packageId in package_ids:
                     sec_list.add(packageId)
-        
+                
         for packId in sec_list:
             self.avb_packs.pop(self.avb_packs.index(packId))
+
+        while len(sec_list) < 16 and len(self.early_dev_list) > 0:
+            sec_list.add(self.early_dev_list.pop())
 
         sec_list = self.find_packages(sec_list)
         sec_list = self.sort_packages(sec_list)
         sec_list = self.find_adj_locations(sec_list[0])
         return self.sort_packages(sec_list)
 
+    
 
-    def create_first_list(self, late_list, wrong_add_list, avb_packs):
+    def create_first_list(self, late_list, avb_packs):
         first_list = []
         first_list.extend(late_list)
-        first_list.extend(wrong_add_list)
+        late_list.clear()
+        first_list.extend(self.early_dev_list)
         first_list = self.find_packages(first_list)
         first_list = self.sort_packages(first_list)
         first_list = self.find_adj_locations(first_list[0])
         first_list = self.sort_packages(first_list)
-
         return first_list
 
-    def create_third_list(self, avb_packs):
+    def create_third_list(self, avb_packs, wrong_add_list):
         third_list = [pack for pack in avb_packs]
         avb_packs.clear()
+        third_list.extend(wrong_add_list)
         third_list = self.sort_packages(third_list)
         return third_list
 
     def find_packages(self, packageIds):
+        
         all_packages = set()
         for packageId in packageIds:
             all_packages.add(packageId)
             package = self.hub_packages[packageId]
             location = self.locations[package.locationId]
             for packId in location.packages:
-                all_packages.add(packId)
                 if packId in self.avb_packs:
+                    if len(all_packages) >= 16:
+                        return all_packages
+                    all_packages.add(packId)
                     self.avb_packs.pop(self.avb_packs.index(packId))
         return all_packages
 
@@ -147,30 +167,6 @@ class Controller:
             
         return list(ids)
 
-
-
-    # def calculate_distance(self, packages):
-    #     packages = self.sort_packages(packages)
-    #     start = self.locations[0]
-    #     total_distance = self.get_distance(start.id, packages[0].locationId)
-    #     print("%s to %s is %.1f"% (start.address, self.locations[packages[0].locationId].address, total_distance))
-
-    #     for i in range(1, len(packages)):
-    #         from_loc_id = packages[i-1].locationId
-    #         to_loc_id = packages[i].locationId
-    #         distance = self.get_distance(from_loc_id, to_loc_id)
-    #         total_distance += distance
-    #         print("%s to %s is %.1f"% (self.locations[from_loc_id].address, self.locations[to_loc_id].address, distance))
-    #         print(total_distance)
-
-    #     last_loc_id = packages[len(packages)-1].locationId
-    #     distance = self.get_distance(last_loc_id, start.id)
-    #     total_distance += distance
-    #     print("%s to %s is %.1f"% (self.locations[last_loc_id], start.address, distance))
-    #     print(total_distance)
-        
-    #     return total_distance
-
     def sort_packages(self, packagesIds):
         packagesIds = list(packagesIds)
         sorted_list = []
@@ -195,23 +191,68 @@ class Controller:
         #sorted_list.append((0,last_dist))
         return (sorted_list, last_dist)
 
+    def get_stat_by_time(self, time):
+        self.reset_all()
+        self.truck1.calculate_delivery(time)
+        self.truck2.calculate_delivery(time)
+        self.truck3.calculate_delivery(time)
+
+        return self.truck1, self.truck2, self.truck3
+
     def __init__(self):
         self.locations = self.create_locations()
         self.location_map = self.create_map(self.locations)
         self.hub_packages = self.create_packages(self.locations)
         self.avb_packs = self.hub_packages.keys()[:]
         self.late_list = self.create_late_list(self.avb_packs)
+        self.early_dev_list = self.get_early_dev(self.avb_packs)
         self.wrong_add_list = self.create_wrong_add_list(self.avb_packs)
         self.second_list = self.create_second_list(self.avb_packs)
-        self.first_list = self.create_first_list(self.late_list, self.wrong_add_list, self.avb_packs)
-        self.third_list = self.create_third_list(self.avb_packs)
-        self.truck2 = Truck(2, Time(8,0), self.second_list)
-        self.truck1 = Truck(1,Time(9,5), self.first_list)
-    #helper methods that read values from the files
+        self.first_list = self.create_first_list(self.late_list, self.avb_packs)
+        self.third_list = self.create_third_list(self.avb_packs, self.wrong_add_list)
+        self.truck2 = Truck(2, Time(8,0), self.get_packagesByID(self.second_list, 2))
+        self.truck1 = Truck(1,Time(9,5), self.get_packagesByID(self.first_list,1))
+        #truck2_total_dist = self.calculate_total_dist(self.second_list)
+        #start_time_3 = self.get_3_truck_start_time(self.truck2.start_time, truck2_total_dist, self.truck2.SPEED)
+        self.truck3 = Truck(3, Time(10,20), self.get_packagesByID(self.third_list,3))
     
-    #Reads in all address values from the file
+    
+    def get_packagesByID(self, packageIds, truckId):
+        packages = []
+        for packId in packageIds[0]:
+            package = self.hub_packages[packId[0]]
+            package.truckId = truckId
+            packages.append((package, packId[1]))
+        return (packages, packageIds[1])
 
+#helper methods that read values from the files
 
+    def reset_all(self):
+        self.truck1.reset()
+        self.truck2.reset()
+        self.truck3.reset()
+
+    def get_package_by_id(self, packageId):
+        if packageId not in self.hub_packages.keys():
+            raise IndexError
+        return self.hub_packages[packageId]
+
+    def get_packages_count(self):
+        return len(self.hub_packages.keys())
+
+    def get_3_truck_start_time(self, start_time, route_dist, speed):
+        raw_time = route_dist / speed
+        hours = int(raw_time)
+        mins = (raw_time - hours) * 60
+        duration = Time(hours, mins)
+        return start_time + duration
+
+    def calculate_total_dist(self, route):
+        total_dist = 0
+        for pack in route[0]:
+            total_dist += pack[1]
+        return total_dist + route[1]
+    
     def get_distance(self, from_loc_id, to_loc_id):
         return self.location_map.distances[from_loc_id, to_loc_id]
 
@@ -238,6 +279,7 @@ class Controller:
         addresses = self.strip_str_values(addresses_strings)
         return addresses
 
+#Reads in all address values from the file
     def read_csv_values(self, file_name):
         values_list = []
         f = open(file_name, "r")

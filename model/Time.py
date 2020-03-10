@@ -23,9 +23,9 @@ class Time:
         return Time(new_hours, new_mins)
 
     def get_mins(self):
-        if self.hour > 0:
-            return self.hour * 60 + self.mins
-        return self.mins
+        if self.hour < 0:
+            return 0
+        return self.hour * 60 + self.mins
 
     def __str__(self):
         str_nums = str(self.mins)
