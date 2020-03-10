@@ -13,14 +13,14 @@ class Truck:
         self.dist_to_hub = 0
         self.total_distance = 0
         self.current_distance = 0
-        self.loadQueue = self.load_truck(load)
+        self.loadQueue = self.loadTruck(load)
         self.delivered = []
         self.status = Status.IN_HUB
-        self.is_back = False
 
-    def load_truck(self, load):
+    def loadTruck(self, load):
         loadQueue = Queue()
         for package in load[0]:
+            package[0].status = Status.IN_TRANSIT
             loadQueue.enqueue(package)
             self.total_distance += package[1]
             self.load_size += 1
@@ -29,14 +29,14 @@ class Truck:
         self.total_distance += load[1]
         return loadQueue
 
-    def calculate_distance(self, current_time):
+    def calculateDistance(self, current_time):
         time_span = current_time - self.start_time
         total_mins = time_span.get_mins()
         return (total_mins / 60) * self.SPEED
     
 
-    def calculate_delivery(self, current_time):
-        distance = self.calculate_distance(current_time)
+    def calculateDelivery(self, current_time):
+        distance = self.calculateDistance(current_time)
         if distance == 0:
             self.status = Status.IN_HUB
             return
@@ -44,7 +44,7 @@ class Truck:
         if distance >= self.total_distance:
             self.status = Status.IN_HUB
             self.is_back = True
-            self.deliver_all()
+            self.deliverAll()
             self.current_distance = self.total_distance
             return 
             
@@ -57,12 +57,22 @@ class Truck:
             package = self.loadQueue.dequeue()
             package[0].status = Status.DELIVERED
             self.current_distance += package[1]
+            package[0].deliveryTime = self.calculateDeliveryTime(self.start_time, self.current_distance)
             self.delivered.append(package)
        
         self.current_distance += distance
         self.status = Status.IN_TRANSIT
     
-    def calculate_route_time(self):
+
+    def calculateDeliveryTime(self, start_time, distance):
+        raw_time = distance / self.SPEED
+        hours = int(raw_time)
+        mins = (raw_time - hours) * 60
+        duration = Time(hours, mins)
+        return start_time + duration
+
+
+    def calculateRouteTime(self):
         raw_time = self.total_distance / 18
         hours = int(raw_time)
         mins = math.ceil((raw_time - hours) * 60)
@@ -70,11 +80,12 @@ class Truck:
         return self.start_time + duration
 
 
-    def deliver_all(self):
+    def deliverAll(self):
         while self.loadQueue.head:
             package = self.loadQueue.dequeue()
             package[0].status = Status.DELIVERED
             self.current_distance += package[1]
+            package[0].deliveryTime = self.calculateDeliveryTime(self.start_time, self.current_distance)
             self.delivered.append(package)
         return self.current_distance
             
@@ -95,9 +106,9 @@ class Truck:
     def reset(self):
         while len(self.delivered) > 0:
             package = self.delivered.pop()
-            package[0].status = Status.IN_HUB
-            self.loadQueue.enqueue(package)
+            package[0].status = Status.IN_TRANSIT
+            package[0].deliveryTime = None
+            self.loadQueue.front(package)
         self.current_distance = 0
         self.status = Status.IN_HUB
-        self.is_back = False
         return True

@@ -23,7 +23,17 @@ class Queue:
         self.tail = self.tail.next
         self.num_elements += 1
       
-        
+    def front(self, item):
+        if self.head is None:
+            self.head = Node(item)
+            self.tail = self.head
+            self.num_elements += 1
+            return
+        node = Node(item)
+        node.next = self.head
+        self.head = node
+        self.num_elements += 1
+
     def size(self):
         return self.num_elements
 

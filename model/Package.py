@@ -7,6 +7,7 @@ class Package:
         self.weight = weight
         self.note = note
         self.status = status
+        self.deliveryTime = None
 
     def __str__(self):
-        return str("%d, %s, %s, %s, %s" %(self.id, self.locationId, self.deadline, self.status, self.note))
+        return str("%d, %s, %s, %s, %s,%s" %(self.id, self.locationId, self.deadline, self.status, self.note, self.deliveryTime))

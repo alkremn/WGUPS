@@ -1,3 +1,4 @@
+import math
 class Time:
 
     def __init__(self, hour, mins):
@@ -30,5 +31,5 @@ class Time:
     def __str__(self):
         str_nums = str(self.mins)
         if self.mins < 10:
-            str_nums = "0" + str(self.mins)
-        return str("Time is %d:%s"%(self.hour, str_nums))
+            str_nums = "0" + str(math.ceil(self.mins))
+        return str("%d:%.2s"%(self.hour, str_nums))
