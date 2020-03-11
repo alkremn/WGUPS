@@ -1,5 +1,6 @@
 from datastractures.Hash_table import CustomHashTable
 
+#Graph class using to create locations and distance between locations
 class Graph:
     def __init__(self):
         self.adjacent_locations = CustomHashTable()

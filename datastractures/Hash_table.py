@@ -54,9 +54,7 @@ class CustomHashTable:
                     self.key_list.remove(key)
                     self.num_elements -= 1
 
-
     #helper methods
-
     def calculate_hash(self, index, key):
         return (hash(key) + self.hash_2(key) * index) % len(self.table)
 
@@ -72,18 +70,19 @@ class CustomHashTable:
     def hash_2(self, key):
         return 7 - hash(key) % 7
 
+    #override to string method
     def __str__(self):
         str_list = ""
         for key in self.key_list:
             str_list += str(self[key]) + "\n" 
         return str_list
-
+    #gives ability to use brakets [] to access the element in the hash table
     def __getitem__(self, key):
        return self.search(key)
 
+    #gives ability to use brakets [] to set the element in the hash table
     def __setitem__(self, key, item):
         return self.insert(key, item)
 
     def __contains__(self, key):
         return key in self.key_list
-   

@@ -1,18 +1,18 @@
-from Controller import Controller
-from model.Time import Time
-from model.Truck import Truck
-from datastractures.Queue import Queue
-import helper_methods as helper
+# Alexey Kremnev
+# Student id #000538108
 
+from Controller import Controller
+import Helper_methods as helper
 
 print("\nWelcome to WGUPS package tracker!\n")
 print("Hold on while we are calculating the route...\n")
 
+# Creates main controller which initializes all data fields and calculates the route for all packages
 controller = Controller()
 total_distance = 0
 for truck in controller.getTrucks():
     total_distance += truck.total_distance
-
+print("Done!")
 print("We are using: %d trucks, with total miles: %.1f"%(controller.truckCount(), total_distance))
 print("---------------------")
 
@@ -37,9 +37,3 @@ while True:
     except ValueError:
         print("Its not a number. Please, try again!")
         print("-------------------------===========")
-    
-
-
-
-
-

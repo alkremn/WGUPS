@@ -2,10 +2,10 @@ from model.Package import Package
 from model.Location import Location
 from datastractures.Hash_table import CustomHashTable
 from datastractures.Graph import Graph
-from datastractures.Queue import Queue
 from model.Truck import Truck
 from model.Time import Time
 from model.Status import Status
+
 class Controller:
 
     def createLocations(self):
@@ -14,7 +14,6 @@ class Controller:
         for i in range(len(addresses)):
             locations[i] = Location(i, addresses[i])
         return locations
-
 
     def createPackages(self, locations):
         raw_package_values = self.readCSVValues("files/package_file.csv")
@@ -33,7 +32,7 @@ class Controller:
                         location.packages.append(package.id)
         return packages
 
-# Creates graph with locations and distances between them
+    # Creates graph with locations and distances between them
     def createMap(self, locations):
         location_map = Graph()
         location_map.add_locations(locations)
@@ -250,13 +249,6 @@ class Controller:
     def getPackagesCount(self):
         return len(self.hub_packages.keys())
 
-    # def get_3_truck_start_time(self, start_time, route_dist, speed):
-    #     raw_time = route_dist / speed
-    #     hours = int(raw_time)
-    #     mins = (raw_time - hours) * 60
-    #     duration = Time(hours, mins)
-    #     return start_time + duration
-
     def calculateTotalDist(self, route):
         total_dist = 0
         for pack in route[0]:
@@ -289,7 +281,7 @@ class Controller:
         addresses = self.stripStrValues(addresses_strings)
         return addresses
 
-#Reads in all address values from the file
+    #Reads in all address values from the file
     def readCSVValues(self, file_name):
         values_list = []
         f = open(file_name, "r")
