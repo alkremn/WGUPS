@@ -1,10 +1,10 @@
 import math
+#custom class Time, using to calculate the delivery time 
 class Time:
 
     def __init__(self, hour, mins):
         self.hour = hour
         self.mins = mins
-
 
     def __add__(self,other):
         new_hours = self.hour + other.hour
