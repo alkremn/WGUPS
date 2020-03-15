@@ -88,7 +88,6 @@ class Controller:
 
         for packageId in earlyDevList:
             self.avb_packs.pop(self.avb_packs.index(packageId))
-        
         return earlyDevList
 
     # Creates list of the packages for the second truck.
@@ -155,14 +154,19 @@ class Controller:
                     self.avb_packs.pop(self.avb_packs.index(packId))
         return all_packages
 
-    #That is main algorithm that utilizes the greedy approach to find from 
+    # This method gets sorted packages gets their locations and finds additional packages 
+    # that will be on its way to the next location.
+    # Time-complexity is first loop => O(n)
+    #            second nested loop => O(n^2)
+    #                 thid for loop => O(n)
+    #         Total time-complexity => O(n) + O(n^2) + O(n) = O(n^2)
     def findNearLocations(self, packageIds):
         add_packages = set()
-        count = len(packageIds)
         ids = set()
+        # turns package IDs list to the set
         for id in packageIds:
             ids.add(id[0])
-
+        
         for i in range(1, len(packageIds)):
             packId1 = packageIds[i-1][0]
             packId2 = packageIds[i][0]
@@ -176,15 +180,17 @@ class Controller:
                     sec_distance = self.getDistance(package_two.locationId, package.locationId)
                     if first_distance < main_distance and sec_distance < main_distance:
                         add_packages.add(package.id)
-                       
+        
         for packageId in add_packages:
             if len(ids) >= 16:
                 break
             self.avb_packs.pop(self.avb_packs.index(packageId))
             ids.add(packageId)
-            
         return list(ids)
-
+    
+    # This method uses greedy approach to sort the packages by closest distance to the corrent location. 
+    # Then that location becomes current and it repeats the search 
+    # Time-complexity is O(n^2) 
     def sortPackages(self, packagesIds):
         packagesIds = list(packagesIds)
         sorted_list = []
@@ -206,21 +212,8 @@ class Controller:
         package = self.hub_packages[lastId]
         location = self.locations[package.locationId]
         last_dist = self.getDistance(location.id, 0)
+        
         return (sorted_list, last_dist)
-
-    # This is an interface method that is called from main.py to calculate the data by spacific time stamp
-    # that was passed as a parameter.
-    # Time complexity is O(n) where n is number of the trucks
-    def calculateDelivery(self, time):
-        for truck in self.trucks:
-            truck.reset()       
-            truck.calculateDelivery(time)
-
-        return self.getTrucks()
-
-    # This is an interface method that returns the number of the trucks
-    def getTrucks(self):
-        return self.trucks
 
     # Constructor method that initializes all fields, calculates the routes.
     def __init__(self):
@@ -238,11 +231,9 @@ class Controller:
         self.trucks.append(Truck(2, Time(8,0), self.getPackagesByID(self.second_list, 2)))
         self.trucks.append(Truck(1,Time(9,5), self.getPackagesByID(self.first_list,1)))
         self.trucks.append(Truck(3, Time(10,20), self.getPackagesByID(self.third_list,3)))
-    
-    
-    def truckCount(self):
-        return len(self.trucks)
 
+    # This method finds all packages by package IDs and returns the list
+    # Time-complexity is O(n) where n is number ot package IDs
     def getPackagesByID(self, packageIds, truckId):
         packages = []
         for packId in packageIds[0]:
@@ -251,8 +242,27 @@ class Controller:
             packages.append((package, packId[1]))
         return (packages, packageIds[1])
 
-    # helper methods that read values from the files
+    #------------------------------------------------
+    #               helper methods
+    #------------------------------------------------
     
+    # Returns number of trucks
+    def truckCount(self):
+        return len(self.trucks)
+
+    # This is an interface method that is called from main.py to calculate the data by spacific time stamp
+    # that was passed as a parameter.
+    # Time complexity is O(n) where n is number of the trucks
+    def calculateDelivery(self, time):
+        for truck in self.trucks:
+            truck.reset()       
+            truck.calculateDelivery(time)
+        return self.getTrucks()
+
+    # This is an interface method that returns the number of the trucks
+    def getTrucks(self):
+        return self.trucks
+
     # Returns the address object by the locaion Id
     # Time-complexity is O(1) constant since it utilizes Hash table.
     def getPackageAddress(self, locationId):
@@ -271,24 +281,25 @@ class Controller:
             raise IndexError
         return self.hub_packages[packageId]
 
+    # Returns all packages in the list
+    # Time-complexity is O(n) where n is number of packages
     def getAllPackages(self):
         packages = []
         for packageId in self.hub_packages.keys():
             packages.append(self.hub_packages[packageId])
         return packages
 
+    # This is an interface method that returns the number of packages
     def getPackagesCount(self):
         return len(self.hub_packages.keys())
-
-    def calculateTotalDist(self, route):
-        total_dist = 0
-        for pack in route[0]:
-            total_dist += pack[1]
-        return total_dist + route[1]
     
+    # Helper method returns distance from location to location
+    # Time-complexity is constant O(1), location map distances uses hast table
     def getDistance(self, from_loc_id, to_loc_id):
         return self.location_map.distances[from_loc_id, to_loc_id]
 
+    # Processes the note to extract additional packages
+    # Time-complexity is O(n) where n is number of words in the note
     def processNotes(self, note):
         words = note.split(" ")
         numbers = []
@@ -297,16 +308,18 @@ class Controller:
                 numbers.append(int(word))
         return numbers
 
+    # This method reads in all distance values from the file
+    # Time-complexity is O(n^2). 
     def readDistances(self, locations):
         distances = self.readCSVValues("files/distance.csv")
         distances = self.splitStrValues(distances)
         distance_list = []
-        
         for j in range(len(locations.keys())):
             for i in range(j, len(locations.keys())):
                 distance_list.append((locations[j].id, locations[i].id, float(distances[i][j])))
         return distance_list
 
+    # Reads in all address values from the file
     def getAddresses(self):
         addresses_strings = self.readCSVValues("files/addresses.csv")
         addresses = self.stripStrValues(addresses_strings)

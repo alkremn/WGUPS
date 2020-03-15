@@ -1,6 +1,6 @@
 from model.Time import Time
 
-#These are helper methods for main to show all the info. Main purpose is readability
+#These are helper methods for main to show all the info. The main purpose is readability.
 
 #printing the main menu
 def print_menu():

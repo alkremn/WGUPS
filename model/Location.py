@@ -5,5 +5,3 @@ class Location:
         self.address = address
         self.packages = []
 
-    def __str__(self):
-        return self.address + " visited: " + str(self.visited)

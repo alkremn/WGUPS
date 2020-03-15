@@ -2,13 +2,14 @@ class EmptyBucket:
     pass
 
 class CustomHashTable:
+    # Constructor
     def __init__(self, init_capacity=8):
         #creating two options for the array
         self.EMPTY_SINCE_START = EmptyBucket()
         self.EMPTY_AFTER_REMOVAL = EmptyBucket()
         self.num_elements = 0
         self.key_list = []
-        
+
         #initializing array with empty bucket objects
         self.table = [self.EMPTY_SINCE_START] * init_capacity
     
