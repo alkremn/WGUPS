@@ -6,8 +6,11 @@ from model.Truck import Truck
 from model.Time import Time
 from model.Status import Status
 
+# This is a main class Controller that reads all data in, initializes fields. 
 class Controller:
 
+    # This method creates Location objects 
+    # time-complexity O(n)
     def createLocations(self):
         locations = CustomHashTable()
         addresses = self.getAddresses()
@@ -15,6 +18,10 @@ class Controller:
             locations[i] = Location(i, addresses[i])
         return locations
 
+    # This method creats Package objects 
+    # Time-complexity is O(n^2) since we have a second "for" loop to go through all locations and find 
+    # the location that the package is for.
+    # Then we add this package to the location list. 
     def createPackages(self, locations):
         raw_package_values = self.readCSVValues("files/package_file.csv")
         package_list = self.splitStrValues(raw_package_values)
@@ -32,7 +39,8 @@ class Controller:
                         location.packages.append(package.id)
         return packages
 
-    # Creates graph with locations and distances between them
+    # Creates graph with locations and distances between them. Using "for" loop to go through all distances.
+    # Time-complexity is O(n) 
     def createMap(self, locations):
         location_map = Graph()
         location_map.add_locations(locations)
@@ -45,6 +53,8 @@ class Controller:
         
         return location_map
 
+    # Creates late list by sorting the available packages list
+    # Time-complexity is O(n)
     def createLateList(self, packagesIds):
         late_list = []
         for packId in packagesIds:
@@ -54,6 +64,8 @@ class Controller:
                 self.avb_packs.pop(self.avb_packs.index(packId))
         return late_list
 
+    # Finds the package with the wrong address listed, using 2 loops.
+    # Time-complexity is O(n + n) = O(n)
     def createWrongList(self, packagesIds):
         wrongAddressList = []
         for packId in packagesIds:
@@ -65,6 +77,8 @@ class Controller:
             self.avb_packs.pop(self.avb_packs.index(packId))
         return wrongAddressList
 
+    # Finds eary delivery packages and adds them to the list.
+    # Time-complexity is O(n+n) = O(n)
     def getEarlyDevList(self, avb_packs):
         earlyDevList = []
         for packageId in avb_packs:
@@ -77,6 +91,8 @@ class Controller:
         
         return earlyDevList
 
+    # Creates list of the packages for the second truck.
+    # Time-complexity is O(n^2) because of the second "for" loop
     def createSecondList(self, packagesIds):
         sec_list = set()
         for packageId in packagesIds:
@@ -101,7 +117,8 @@ class Controller:
         return self.sortPackages(sec_list)
 
     
-
+    # Creates list of the packages for the first truck.
+    # Time-complexity is O(n).
     def createFirstList(self, late_list, early_dev_list, avb_packs):
         first_list = []
         first_list.extend(late_list)
@@ -113,6 +130,8 @@ class Controller:
         first_list = self.sortPackages(first_list)
         return first_list
 
+    # Creates list of the packages for the third truck.
+    # Time-complexity is O(n).
     def createThirdList(self, avb_packs, wrong_add_list):
         third_list = [pack for pack in avb_packs]
         avb_packs.clear()
@@ -120,6 +139,8 @@ class Controller:
         third_list = self.sortPackages(third_list)
         return third_list
 
+    # Finds addition packages that might have the same destination as the package from the parameter list
+    # Time-complexity is O(n^2) since we have second loop to go through the available packages.
     def findPackages(self, packageIds):
         all_packages = set(packageIds)
         for packageId in packageIds:
@@ -134,7 +155,7 @@ class Controller:
                     self.avb_packs.pop(self.avb_packs.index(packId))
         return all_packages
 
-
+    #That is main algorithm that utilizes the greedy approach to find from 
     def findNearLocations(self, packageIds):
         add_packages = set()
         count = len(packageIds)
@@ -187,6 +208,9 @@ class Controller:
         last_dist = self.getDistance(location.id, 0)
         return (sorted_list, last_dist)
 
+    # This is an interface method that is called from main.py to calculate the data by spacific time stamp
+    # that was passed as a parameter.
+    # Time complexity is O(n) where n is number of the trucks
     def calculateDelivery(self, time):
         for truck in self.trucks:
             truck.reset()       
@@ -194,9 +218,11 @@ class Controller:
 
         return self.getTrucks()
 
+    # This is an interface method that returns the number of the trucks
     def getTrucks(self):
         return self.trucks
 
+    # Constructor method that initializes all fields, calculates the routes.
     def __init__(self):
         self.locations = self.createLocations()
         self.location_map = self.createMap(self.locations)
@@ -225,16 +251,21 @@ class Controller:
             packages.append((package, packId[1]))
         return (packages, packageIds[1])
 
-#helper methods that read values from the files
-
+    # helper methods that read values from the files
+    
+    # Returns the address object by the locaion Id
+    # Time-complexity is O(1) constant since it utilizes Hash table.
     def getPackageAddress(self, locationId):
         return self.locations[locationId].address
 
+    # Modifies the status from Enumeration to readable string and returns it
     def getStatus(self, status):
         if status == Status.IN_HUB: return "In Hub"
         elif status ==Status.IN_TRANSIT: return "In transit"
         else: return "Delivered"
 
+    # Method returns the package by package id.
+    # Time-complexity is O(1) constant.
     def getPackageById(self, packageId):
         if packageId not in self.hub_packages.keys():
             raise IndexError
@@ -281,7 +312,8 @@ class Controller:
         addresses = self.stripStrValues(addresses_strings)
         return addresses
 
-    #Reads in all address values from the file
+    # Reads in all address values from the file
+    # Time-complexity is O(n) where n is number of lines in the file
     def readCSVValues(self, file_name):
         values_list = []
         f = open(file_name, "r")
@@ -292,6 +324,8 @@ class Controller:
         f.close()
         return values_list
 
+    # Splits string by comma and returns a list
+    # Time-complexity is O(n)
     def splitStrValues(self, raw_values):
         values_list = []
         for value_str in raw_values:
@@ -299,6 +333,8 @@ class Controller:
             values_list.append(value_str.split(","))
         return values_list
 
+    # Removes "\n" in the string and returs a list
+    # Time-complexity is O(n)
     def stripStrValues(self, values):
         values_list = []
         for value in values:
